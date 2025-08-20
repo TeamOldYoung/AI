@@ -73,15 +73,16 @@
 6. 최종 결과를 다음 형식으로 보고하라:
 
 ━━━━━━━━━━━
-📌 [결과 요약]
+[결과 요약]
 
-- 소득평가액: X원
-- 재산 소득환산액: Y원
-- 소득인정액: Z원
-- 중위소득 대비 비율: W%
-- 예상 소득분위: ○분위
+incomeEval Long
+assetEval Long
+totalIncome Long
+midRatio Long
+expBracket Long
 
 판단 근거는 절대로 서술하지 말것, 결과로는 반드시 [결과 요약] 만을 제시해야 한다
+결과물은 json으로 출력해줘
 
 ━━━━━━━━━━━
 
