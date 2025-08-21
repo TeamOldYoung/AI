@@ -60,12 +60,12 @@ def parse_and_format_cards(xml_text: str) -> List[Dict[str, Any]]:
             "전화문의": phone,
             "지원대상": eligibility,
             # 참고로 지역 정보가 필요하면 추가
-            "지역": {
-                "시도": _txt(it, "ctpvNm"),
-                "시군구": _txt(it, "sggNm"),
-            },
-            # 필요시 다른 부가 정보도 덧붙일 수 있음
-            "마지막수정일": _to_iso_yyyymmdd(_txt(it, "lastModYmd")),
+            # "지역": {
+            #     "시도": _txt(it, "ctpvNm"),
+            #     "시군구": _txt(it, "sggNm"),
+            # },
+            # # 필요시 다른 부가 정보도 덧붙일 수 있음
+            # "마지막수정일": _to_iso_yyyymmdd(_txt(it, "lastModYmd")),
         }
         cards.append(card)
 
