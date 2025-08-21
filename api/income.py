@@ -128,10 +128,10 @@ class IncomePredictor(Resource):
         )
 
         # 2) DB 저장
-        try:
-            incomebreaket_id, incomesnapshot_id = persist_income_records(data, result)
-        except Exception as e:
-            income_ns.abort(500, f"DB 저장 실패: {e}")
+        # try:
+        #     incomebreaket_id, incomesnapshot_id = persist_income_records(data, result)
+        # except Exception as e:
+        #     income_ns.abort(500, f"DB 저장 실패: {e}")
 
         # 3) 응답
         return {

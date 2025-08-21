@@ -1,10 +1,22 @@
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
+from langchain_community.tools import DuckDuckGoSearchRun, DuckDuckGoSearchResults
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+
 
 # DuckDuckGo 검색 도구 초기화
-search = DuckDuckGoSearchRun()
+wrapper = DuckDuckGoSearchAPIWrapper(
+    region="kr-kr",      # 지역 편향 최소화 (예: "kr-kr", "us-en"도 가능)
+    safesearch="strict",    # off | moderate | strict
+    time="y",            # d | w | m | y (또는 None)
+    max_results=50,      # 더 많이 가져오기
+    backend="auto",      # api | html | lite | auto
+)
+
+# 문자열 하나(요약 스니펫)만 필요하면:
+search = DuckDuckGoSearchRun(api_wrapper=wrapper)
+
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -22,75 +34,33 @@ def load_income_prompt() -> str:
 
 
 def summarize_welfare_info(
-    life: str,
-    trgter: str,
-    theme: str,
-    age: int,
     city: str,
-    district: str,
-    keyword: str = "",
-    sort: str = "인기순"
 ):
     """
     LangChain 기반: 지역 복지 정보를 DuckDuckGo로 검색하고 요약
     """
     system_prompt = load_income_prompt()
 
-    #query = f"{region} 복지 혜택 지원 사업"
+    query = f"{city} 노인 복지 혜택 지원 사업"
 
     try:
-        # # 1. DuckDuckGo 검색 결과 (구조화된 형태)
-        # results = search.invoke(query)
-        #
-        # if not results or len(results) == 0:
-        #     return f"{region} 관련 복지 정보를 찾지 못했습니다."
-        #
-        # print(results)
+        # 1. DuckDuckGo 검색 결과 (구조화된 형태)
+        results = search.invoke(query)
 
-        # 매핑
-        life_code = life_map.get(life, "")
-        trgter_code = trgter_map.get(trgter, "")
-        theme_code = theme_map.get(theme, "")
-        srchKeyCode = "003"  # 서비스명+내용
-        arrgOrd = "002" if sort == "인기순" else "001"
+        if not results or len(results) == 0:
+            return f"{region} 관련 복지 정보를 찾지 못했습니다."
 
-        # 검색어 인코딩
-        searchWrd = urllib.parse.quote(keyword)
-
-        # URL 생성
-        url = (
-            f"http://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations/LcgvWelfarelist"
-            f"?serviceKey={SERVICE_KEY}"
-            f"&pageNo=1"
-            f"&numOfRows=100"
-            f"&lifeArray={life_code}"
-            f"&trgterIndvdlArray={trgter_code}"
-            f"&intrsThemaArray={theme_code}"
-            # f"&age={age}"
-            # f"&ctpvNm={urllib.parse.quote(city)}"
-            # f"&sggNm={urllib.parse.quote(district)}"
-            f"&srchKeyCode={srchKeyCode}"
-            # f"&searchWrd={searchWrd}"
-            # f"&arrgOrd={arrgOrd}"
-        )
-
-        # API 요청
-        response = requests.get(url)
-        print("✅ 응답 상태코드:", response.status_code)
-        print("📦 응답 내용 (앞부분):\n", response.text)
-
-        return response.text  # 향후 XML 파싱 시 사용
+        print(results)
 
 
-        # # 3. LLM 요약 프롬프트
-        # prompt = system_prompt
-        #
-        # response = llm.invoke(prompt)
-        # return response.content.strip()
+        prompt = system_prompt + results
+
+        response = llm.invoke(prompt)
+        return response.content.strip()
 
     except Exception as e:
         return f"[오류] 처리 중 문제가 발생했습니다: {e}"
 
 
 if __name__ == "__main__":
-    print(summarize_welfare_info('''경기도 성남시 분당구'''))
+    print(summarize_welfare_info('''경기도'''))
