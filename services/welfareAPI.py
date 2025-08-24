@@ -15,7 +15,6 @@ def fetch_welfare_info(
     city: str,
 ):
     # 매핑
-    life_code = '005,006'
     srchKeyCode = "003"  # 서비스명+내용
 
     if age == 0:
@@ -29,7 +28,7 @@ def fetch_welfare_info(
         f"?serviceKey={SERVICE_KEY}"
         f"&pageNo=1"
         f"&numOfRows=30"
-        f"&lifeArray={life_code}"
+        f"&lifeArray={age_code}"
         f"&srchKeyCode={srchKeyCode}"
         f"&ctpvNm={city}"
     )
@@ -44,7 +43,8 @@ def fetch_welfare_info(
     #     return cards
 
     for i in cards:
-        save_welfare_item(city, i)
+        save_welfare_item(city, i, age)
+
 
     return f"{len(cards)}의 정보가 등록됨"
 
