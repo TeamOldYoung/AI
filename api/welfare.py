@@ -7,7 +7,7 @@ welfare_ns = Namespace("welfare", description="지역 복지 정보 검색 API")
 
 # 요청 모델 정의
 welfare_request = welfare_ns.model("WelfareRequest", {
-    "age(bool)": fields.Integer(required=True, description="나이 플래그 (0=유아/청소년, 1=노년)", enum=[0, 1]),
+    "age(bool)": fields.Integer(required=True, description="나이 플래그 (0=유아/청소년, 1=노년)"),
     "city": fields.String(required=True, description="지역명 (예: 강남구, 마포구 등)")
 })
 
@@ -27,8 +27,10 @@ class WelfareSearch(Resource):
     @welfare_ns.marshal_with(welfare_response)
     def post(self):
         data = request.get_json()
-        age = data.get("age")
+        age = data.get("age(bool)")
         city = data.get("city")
+
+        print(age, city)
 
         # 복지정보 검색 처리
         info = fetch_welfare_info(age, city)

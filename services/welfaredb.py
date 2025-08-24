@@ -1,6 +1,6 @@
 # save_welfare.py
 from typing import Optional, Dict, Any, Tuple, List
-from AI.database.db import get_connection
+from database.db import get_connection
 
 def _clean(v: Optional[str]) -> Optional[str]:
     if v is None:
@@ -19,7 +19,7 @@ def _current_columns(conn, table: str) -> List[str]:
         cur.execute(q, (table,))
         return [r[0] for r in cur.fetchall()]
 
-def save_welfare_item(city: str, item: Dict[str, Any], table: str = "welfare_item") -> int:
+def save_welfare_item(city: str, item: Dict[str, Any], age: int = None, table: str = "welfare_item") -> int:
     """
     item 예:
     {
@@ -31,6 +31,7 @@ def save_welfare_item(city: str, item: Dict[str, Any], table: str = "welfare_ite
       "전화문의": "",
       "지원대상": ""
     }
+    age: welfare API에서 전달받은 age 파라미터 (0=젊은연령대, 1=나이든연령대)
     """
     # 1) 한국어 키 → 컬럼명 매핑 (부족/오타 대비해서 대체 키도 함께 체크)
     mapped = {
@@ -43,6 +44,7 @@ def save_welfare_item(city: str, item: Dict[str, Any], table: str = "welfare_ite
         "applicant": _clean(item.get("지원대상") or item.get("applicant")),
         "link":      _clean(item.get("바로가기") or item.get("link") or item.get("url")),
         "city": city,
+        "age": age,
     }
 
     if not mapped["title"]:
@@ -53,7 +55,7 @@ def save_welfare_item(city: str, item: Dict[str, Any], table: str = "welfare_ite
         with conn:
             cols_in_db = set(_current_columns(conn, table))
             # 2) 실제 테이블에 존재하는 컬럼만 골라 INSERT
-            desired_order = ["title", "subscript", "period", "agency", "contact", "applicant", "link", "city"]
+            desired_order = ["title", "subscript", "period", "agency", "contact", "applicant", "link", "city", "age"]
             use_cols = [c for c in desired_order if c in cols_in_db]
             placeholders = ", ".join(["%s"] * len(use_cols))
             col_list = ", ".join(use_cols)
@@ -67,4 +69,3 @@ def save_welfare_item(city: str, item: Dict[str, Any], table: str = "welfare_ite
                 return new_id
     finally:
         conn.close()
-
