@@ -35,12 +35,11 @@ langsmith==0.4.6
 # OpenAI 및 AI 모델
 openai==1.96.1
 tiktoken==0.9.0
-# 아래 버전은 3.13에서 wheel 공백 이슈가 관측될 수 있어 3.12 런타임 권장
-faiss-cpu==1.8.0   # 변경: 1.11.x → 1.8.0 (안정적인 다수 리눅스/파이썬 조합에 wheel 존재)
+# NumPy 2.x ↔ faiss 호환성 이슈 회피
+faiss-cpu==1.8.0
 
 # 웹 검색 및 크롤링
 duckduckgo_search==8.1.1
-pyduckduckgosearch==1.2.1
 beautifulsoup4==4.13.4
 lxml==6.0.0
 soupsieve==2.7
@@ -54,8 +53,9 @@ idna==3.10
 charset-normalizer==3.4.2
 
 # 데이터 처리
-pandas==2.3.1
-numpy==2.3.1
+# NumPy 2.x → 1.26.4로 내림, Pandas 2.3.x → 2.2.3으로 내림
+pandas==2.2.3
+numpy==1.26.4
 PyYAML==6.0.2
 orjson==3.11.0
 
@@ -101,7 +101,6 @@ MarkupSafe==3.0.2
 
 # 기타 필수 라이브러리
 six==1.17.0
-# setuptools는 requirements에서 제거 권장(도커 단계에서 최신으로 업그레이드)
 importlib_resources==6.5.2
 regex==2024.11.6
 tqdm==4.67.1

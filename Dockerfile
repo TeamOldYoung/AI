@@ -1,51 +1,54 @@
-# 빌드
-FROM python:3.11-slim AS builder
-
+# ===== Builder =====
+FROM python:3.11-slim-bookworm AS builder
 WORKDIR /app
 
-# 시스템 패키지 설치 (빌드용)
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# 휠만 설치하도록 강제 + 설치 도구 최신화
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_ONLY_BINARY=:all: \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# pip 업그레이드 및 캐시 최적화
-RUN pip install --no-cache-dir --upgrade pip
+# 빌드 도구는 생략 가능(휠만 설치할 것이므로) — 필요 시 주석 해제
+# RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ && rm -rf /var/lib/apt/lists/*
 
-# requirements.txt 먼저 복사 → 캐시 최적화
+RUN python -m pip install --upgrade pip setuptools wheel
+
+# requirements 캐시 최적화
 COPY requirements.txt .
-
-# 의존성 캐싱
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # 소스 복사
 COPY . .
 
-# 실행
-FROM python:3.11-slim
-
+# ===== Final =====
+FROM python:3.11-slim-bookworm
 WORKDIR /app
 
-# builder 단계에서 설치된 패키지 복사
+# 런타임 의존성(lxml/psycopg2-binary 등)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl \
+    libxml2 libxslt1.1 \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app.py \
+    FLASK_ENV=production
+
+# builder에서 설치된 패키지/스크립트 복사
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# 애플리케이션 코드 복사
+# 앱 소스 복사
 COPY --from=builder /app .
 
-# Python 환경 설정
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
-
-# 비루트 사용자 생성 및 권한 설정
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown -R appuser:appuser /app
+# 비루트 사용자
+RUN groupadd -r appuser && useradd -r -g appuser appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Flask 포트 3000으로 변경 (app.py에서 설정)
 EXPOSE 3000
 
-# 애플리케이션 실행
+# 애플리케이션 실행(필요 시 gunicorn으로 교체 가능)
 ENTRYPOINT ["python", "app.py"]
