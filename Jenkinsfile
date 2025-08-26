@@ -17,7 +17,7 @@ pipeline {
         // 배포 서버 정보 (Jenkins Credentials에서 설정)
         DEPLOY_HOST = "ec2-54-180-208-86.ap-northeast-2.compute.amazonaws.com"
         DEPLOY_USER = "ubuntu"
-        DEPLOY_PATH = "/srv/oldyoung"
+        DEPLOY_PATH = "/srv/app"
 
         // 헬스체크 설정 (Flask 앱용)
         HEALTH_CHECK_URL = "http://localhost:3000"
