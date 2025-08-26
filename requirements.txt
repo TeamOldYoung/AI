@@ -40,7 +40,6 @@ faiss-cpu==1.8.0
 
 # 웹 검색 및 크롤링
 duckduckgo_search==8.1.1
-pyduckduckgosearch==1.2.1
 beautifulsoup4==4.13.4
 lxml==6.0.0
 soupsieve==2.7
