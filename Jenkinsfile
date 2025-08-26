@@ -123,33 +123,54 @@ pipeline {
                                 '
                             """
 
-                            // 2. 헬스체크
+                            // 2. 컨테이너 시작 대기
+                            echo "⏳ 컨테이너 시작 대기 (15초)..."
+                            sh """
+                                ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=10 \
+                                ${DEPLOY_USER}@${DEPLOY_HOST} 'sleep 15'
+                            """
+                            
+                            // 3. 헬스체크
                             echo "⏳ 헬스체크 시작 (최대 ${HEALTH_CHECK_TIMEOUT}초 대기)..."
                             
                             def healthCheckResult = sh(
                                 script: """
                                     ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=10 \
                                     ${DEPLOY_USER}@${DEPLOY_HOST} '
+                                    # 컨테이너 상태 확인
+                                    echo "🔍 컨테이너 상태 확인..."
+                                    docker ps --filter "name=flask-app" --format "table {{.Names}}\\t{{.Status}}"
+                                    
+                                    # 컨테이너가 실행 중인지 확인
+                                    if ! docker ps --filter "name=flask-app" --filter "status=running" | grep -q flask-app; then
+                                        echo "❌ flask-app 컨테이너가 실행되지 않았습니다"
+                                        docker logs flask-app --tail 20
+                                        exit 1
+                                    fi
+                                    
+                                    # 헬스체크 시작
                                     for i in \$(seq 1 ${HEALTH_CHECK_TIMEOUT}); do
                                         echo "헬스체크 \$i/${HEALTH_CHECK_TIMEOUT}..."
-                                        # Python으로 헬스체크 (curl 대신)
-                                        if docker exec flask-app python -c "
-import urllib.request
-try:
-    response = urllib.request.urlopen('http://localhost:3000/health', timeout=5)
-    if response.status == 200:
-        exit(0)
-    else:
-        exit(1)
-except:
-    exit(1)
-" > /dev/null 2>&1; then
+                                        
+                                        # 직접 curl로 테스트 (docker exec 내부에서)
+                                        if docker exec flask-app curl -s --fail http://localhost:3000/health > /dev/null 2>&1; then
                                             echo "✅ 헬스체크 성공!"
+                                            docker exec flask-app curl -s http://localhost:3000/health
                                             exit 0
                                         fi
+                                        
+                                        # 실패 시 상세 로그
+                                        if [ \$i -eq 1 ] || [ \$((\$i % 10)) -eq 0 ]; then
+                                            echo "📋 디버그 정보 (시도 \$i):"
+                                            docker exec flask-app curl -v http://localhost:3000/health || true
+                                            echo "📋 컨테이너 로그:"
+                                            docker logs flask-app --tail 5
+                                        fi
+                                        
                                         sleep 1
                                     done
-                                    echo "❌ 헬스체크 실패"
+                                    echo "❌ 헬스체크 실패 - 최종 상태:"
+                                    docker logs flask-app --tail 20
                                     exit 1
                                     '
                                 """,
