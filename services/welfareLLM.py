@@ -20,7 +20,7 @@ search = DuckDuckGoSearchRun(api_wrapper=wrapper)
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
-SERVICE_KEY = os.getenv("DATA_service_key")
+SERVICE_KEY = os.getenv("DATA_SERVICE_KEY")
 
 # LLM 초기화
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3)

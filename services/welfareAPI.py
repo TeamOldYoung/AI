@@ -8,7 +8,7 @@ from services.welfaredb import save_welfare_item
 
 # .env 파일 로드
 load_dotenv()
-SERVICE_KEY = os.getenv("DATA_service_key")
+SERVICE_KEY = os.getenv("DATA_SERVICE_KEY")
 
 def fetch_welfare_info(
     age: bool,
